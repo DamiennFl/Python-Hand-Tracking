@@ -70,17 +70,21 @@ HandLandmarkerOptions = mp.tasks.vision.HandLandmarkerOptions
 HandLandmarkerResult = mp.tasks.vision.HandLandmarkerResult
 VisionRunningMode = mp.tasks.vision.RunningMode
 
+RESULT = None
+
 
 # Create a hand landmarker instance with the live stream mode:
 def print_result(
     result: HandLandmarkerResult, output_image: mp.Image, timestamp_ms: int
 ):
-    print("hand landmarker result: {}".format(result))
+    global RESULT
+    RESULT = result
 
 
 options = HandLandmarkerOptions(
     base_options=BaseOptions(model_asset_path="hand_landmarker.task"),
     running_mode=VisionRunningMode.LIVE_STREAM,
+    num_hands=2,
     result_callback=print_result,
 )
 with HandLandmarker.create_from_options(options) as landmarker:
@@ -100,33 +104,14 @@ with HandLandmarker.create_from_options(options) as landmarker:
         # Our operations on the frame come here
         # Display the resulting frame
         frame_timestamp_ms = int(cap.get(cv.CAP_PROP_POS_MSEC))
-        mp_image = mp.Image(
-            image_format=mp.ImageFormat.SRGB, data=np.ascontiguousarray(frame)
-        )
+        mp_image = mp.Image(image_format=mp.ImageFormat.SRGB, data=np.asarray(frame))
         detection_result = landmarker.detect_async(mp_image, frame_timestamp_ms)
-        if detection_result is not None:
-            annotated_image = draw_landmarks_on_image(
-                mp_image.numpy_view(), detection_result
-            )
+        if RESULT is not None:
+            annotated_image = draw_landmarks_on_image(mp_image.numpy_view(), RESULT)
             annotated_image_bgr = cv.cvtColor(annotated_image, cv.COLOR_RGB2BGR)
             cv.imshow("Hand Tracking", annotated_image_bgr)
-            if cv.waitKey(1) == ord("q"):
+            RESULT = None  # Reset the RESULT variable
+            if cv.waitKey(5) == ord("q"):
                 break
-
     cap.release()
     cv.destroyAllWindows()
-
-# Convert BGR to RGB
-# rgb_frame = cv.cvtColor(frame, cv.COLOR_BGR2RGB)
-
-# Optionally flip the frame if needed
-# rgb_frame = cv.flip(rgb_frame, 1)
-
-# Prepare the frame for MediaPipe
-# frame_timestamp_ms = int(cap.get(cv.CAP_PROP_POS_MSEC))
-# mp_image = mp.Image(
-#     image_format=mp.ImageFormat.SRGB, data=np.ascontiguousarray(frame)
-# )
-
-# Perform asynchronous detection
-# landmarker.detect_async(mp_image, frame_timestamp_ms)
