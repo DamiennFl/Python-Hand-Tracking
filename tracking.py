@@ -71,14 +71,28 @@ base_options = python.BaseOptions(model_asset_path="hand_landmarker.task")
 options = vision.HandLandmarkerOptions(base_options=base_options, num_hands=2)
 detector = vision.HandLandmarker.create_from_options(options)
 
-# STEP 3: Load the input image.
-image = mp.Image.create_from_file("image.png")
+# STEP 3: Load the video.
+cap = cv.VideoCapture(0)
+if not cap.isOpened():
+    print("Cannot open camera")
+    exit()
 
-# STEP 4: Detect hand landmarks from the input image.
-detection_result = detector.detect(image)
+while True:
+    # Capture frame-by-frame
+    ret, frame = cap.read()
 
-# STEP 5: Process the classification result. In this case, visualize it.
-annotated_image = draw_landmarks_on_image(image.numpy_view(), detection_result)
-cv.imshow("Image", cv.cvtColor(annotated_image, cv.COLOR_RGB2BGR))
-cv.waitKey(0)
-cv.destroyAllWindows()
+    # if frame is read correctly ret is True
+    if not ret:
+        print("Can't receive frame (stream end?). Exiting ...")
+        break
+    # Our operations on the frame come here
+    # Display the resulting frame
+    cv.flip(frame, 1, frame)
+    # STEP 4: Detect hand landmarks from the input image.
+    detection_result = detector.detect(frame)
+
+    # STEP 5: Process the classification result. In this case, visualize it.
+    annotated_image = draw_landmarks_on_image(frame.numpy_view(), detection_result)
+    cv.imshow("Frame", cv.cvtColor(annotated_image, cv.COLOR_RGB2BGR))
+    cv.waitKey(1)
+    cv.destroyAllWindows()
