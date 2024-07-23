@@ -4,6 +4,9 @@ import mediapipe as mp
 from mediapipe import solutions
 from mediapipe.framework.formats import landmark_pb2
 import numpy as np
+import mediapipe as mp
+from mediapipe.tasks import python
+from mediapipe.tasks.python import vision
 
 MARGIN = 10  # pixels
 FONT_SIZE = 1
@@ -61,38 +64,69 @@ def draw_landmarks_on_image(rgb_image, detection_result):
     return annotated_image
 
 
-# STEP 1: Import the necessary modules.
-import mediapipe as mp
-from mediapipe.tasks import python
-from mediapipe.tasks.python import vision
+BaseOptions = mp.tasks.BaseOptions
+HandLandmarker = mp.tasks.vision.HandLandmarker
+HandLandmarkerOptions = mp.tasks.vision.HandLandmarkerOptions
+HandLandmarkerResult = mp.tasks.vision.HandLandmarkerResult
+VisionRunningMode = mp.tasks.vision.RunningMode
 
-# STEP 2: Create an HandLandmarker object.
-base_options = python.BaseOptions(model_asset_path="hand_landmarker.task")
-options = vision.HandLandmarkerOptions(base_options=base_options, num_hands=2)
-detector = vision.HandLandmarker.create_from_options(options)
 
-# STEP 3: Load the video.
-cap = cv.VideoCapture(0)
-if not cap.isOpened():
-    print("Cannot open camera")
-    exit()
+# Create a hand landmarker instance with the live stream mode:
+def print_result(
+    result: HandLandmarkerResult, output_image: mp.Image, timestamp_ms: int
+):
+    print("hand landmarker result: {}".format(result))
 
-while True:
-    # Capture frame-by-frame
-    ret, frame = cap.read()
 
-    # if frame is read correctly ret is True
-    if not ret:
-        print("Can't receive frame (stream end?). Exiting ...")
-        break
-    # Our operations on the frame come here
-    # Display the resulting frame
-    cv.flip(frame, 1, frame)
-    # STEP 4: Detect hand landmarks from the input image.
-    detection_result = detector.detect(frame)
+options = HandLandmarkerOptions(
+    base_options=BaseOptions(model_asset_path="hand_landmarker.task"),
+    running_mode=VisionRunningMode.LIVE_STREAM,
+    result_callback=print_result,
+)
+with HandLandmarker.create_from_options(options) as landmarker:
+    cap = cv.VideoCapture(0)
+    if not cap.isOpened():
+        print("Cannot open camera")
+        exit()
 
-    # STEP 5: Process the classification result. In this case, visualize it.
-    annotated_image = draw_landmarks_on_image(frame.numpy_view(), detection_result)
-    cv.imshow("Frame", cv.cvtColor(annotated_image, cv.COLOR_RGB2BGR))
-    cv.waitKey(1)
+    while True:
+        # Capture frame-by-frame
+        ret, frame = cap.read()
+
+        # if frame is read correctly ret is True
+        if not ret:
+            print("Can't receive frame (stream end?). Exiting ...")
+            break
+        # Our operations on the frame come here
+        # Display the resulting frame
+        frame_timestamp_ms = int(cap.get(cv.CAP_PROP_POS_MSEC))
+        mp_image = mp.Image(
+            image_format=mp.ImageFormat.SRGB, data=np.ascontiguousarray(frame)
+        )
+        detection_result = landmarker.detect_async(mp_image, frame_timestamp_ms)
+        if detection_result is not None:
+            annotated_image = draw_landmarks_on_image(
+                mp_image.numpy_view(), detection_result
+            )
+            annotated_image_bgr = cv.cvtColor(annotated_image, cv.COLOR_RGB2BGR)
+            cv.imshow("Hand Tracking", annotated_image_bgr)
+            if cv.waitKey(1) == ord("q"):
+                break
+
+    cap.release()
     cv.destroyAllWindows()
+
+# Convert BGR to RGB
+# rgb_frame = cv.cvtColor(frame, cv.COLOR_BGR2RGB)
+
+# Optionally flip the frame if needed
+# rgb_frame = cv.flip(rgb_frame, 1)
+
+# Prepare the frame for MediaPipe
+# frame_timestamp_ms = int(cap.get(cv.CAP_PROP_POS_MSEC))
+# mp_image = mp.Image(
+#     image_format=mp.ImageFormat.SRGB, data=np.ascontiguousarray(frame)
+# )
+
+# Perform asynchronous detection
+# landmarker.detect_async(mp_image, frame_timestamp_ms)

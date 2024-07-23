@@ -1,9 +1,11 @@
-# Image Capture
+# # Image Capture
 # image = cv.imread("image.png")
 # cv.imshow("Image", image)
 # cv.waitKey(0)
 # cv.destroyAllWindows()
 
+
+import cv2 as cv
 
 # Live Camera Video Capture
 cap = cv.VideoCapture(0)
