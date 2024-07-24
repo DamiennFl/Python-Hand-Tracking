@@ -46,12 +46,13 @@ def draw_landmarks_on_image(rgb_image, detection_result):
         height, width, _ = annotated_image.shape
         x_coordinates = [landmark.x for landmark in hand_landmarks]
         y_coordinates = [landmark.y for landmark in hand_landmarks]
-        text_x = int(min(x_coordinates) * width)
+        text_x = int((1 - min(x_coordinates)) * width)
         text_y = int(min(y_coordinates) * height) - MARGIN
 
         # Draw handedness (left or right hand) on the image.
+        text_image = np.zeros_like(annotated_image)
         cv.putText(
-            annotated_image,
+            text_image,
             f"{handedness[0].category_name}",
             (text_x, text_y),
             cv.FONT_HERSHEY_DUPLEX,
@@ -60,6 +61,8 @@ def draw_landmarks_on_image(rgb_image, detection_result):
             FONT_THICKNESS,
             cv.LINE_AA,
         )
+        text_image = cv.flip(text_image, 1)
+        annotated_image = cv.addWeighted(annotated_image, 1.0, text_image, 1.0, 0.0)
 
     return annotated_image
 
@@ -77,6 +80,7 @@ RESULT = None
 def print_result(
     result: HandLandmarkerResult, output_image: mp.Image, timestamp_ms: int
 ):
+    print("hand landmarker result: {}".format(result))
     global RESULT
     RESULT = result
 
@@ -96,6 +100,7 @@ with HandLandmarker.create_from_options(options) as landmarker:
     while True:
         # Capture frame-by-frame
         ret, frame = cap.read()
+        cv.flip(frame, 1)
 
         # if frame is read correctly ret is True
         if not ret:
@@ -108,8 +113,8 @@ with HandLandmarker.create_from_options(options) as landmarker:
         detection_result = landmarker.detect_async(mp_image, frame_timestamp_ms)
         if RESULT is not None:
             annotated_image = draw_landmarks_on_image(mp_image.numpy_view(), RESULT)
-            annotated_image_bgr = cv.cvtColor(annotated_image, cv.COLOR_RGB2BGR)
-            cv.imshow("Hand Tracking", annotated_image_bgr)
+            cv.flip(annotated_image, 1, annotated_image)
+            cv.imshow("Hand Tracking", annotated_image)
             RESULT = None  # Reset the RESULT variable
             if cv.waitKey(5) == ord("q"):
                 break
