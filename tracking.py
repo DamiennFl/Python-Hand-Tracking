@@ -91,8 +91,8 @@ options = HandLandmarkerOptions(
     running_mode=VisionRunningMode.LIVE_STREAM,
     num_hands=2,
     result_callback=print_result,
-    min_hand_detection_confidence=0.8,
-    min_hand_presence_confidence=0.8,
+    min_hand_detection_confidence=0.1,
+    min_hand_presence_confidence=0.1,
 )
 with HandLandmarker.create_from_options(options) as landmarker:
     cap = cv.VideoCapture(0)
