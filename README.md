@@ -1,10 +1,14 @@
 # Hand-Tracking-Volume-Control
 #### Python computer vision hand tracking. Created using a Google mediapipe hand-tracking task which reads frames passed by OpenCV.
 
+https://github.com/user-attachments/assets/379333dd-400b-4e00-9b64-612f8b347a21
+
+
 Requirements:
-- `opencv-python`
-- `mediapipe`
+- `opencv-python` (Setup here: https://docs.opencv.org/4.x/da/df6/tutorial_py_table_of_contents_setup.html)
+- `mediapipe` (Download hand-landmarker task here and make it available in your directory: https://ai.google.dev/edge/mediapipe/solutions/vision/hand_landmarker/index#:~:text=Learn%20more.-,Model%20name,-Input%20shape)
 - `numpy`
+- `matplotlib`
 
 This is a currently a barebones example of how to process video frames from openCV into a mediapipe hand-tracking task. Some things to note:
 - The current implementation mirrors the frames, since this program was executed using a front-facing camera, which mirrors by default. For rear-facing cameras, `text_x = int((1 - min(x_coordinates)) * width)` can be changed to `text_x = int((min(x_coordinates)) * width)` to write the hand labels starting from the right instead of the left. You will also need to remove `text_image = cv.flip(text_image, 1)`, which flips the hand labels once they are drawn.
@@ -15,4 +19,4 @@ This is a currently a barebones example of how to process video frames from open
 Some things are customizable. In this code, you can change:
 - The colors of the tracking. In `draw_landmarks_on_image`, there is commented code which allows you to set custom colors. It is just an example; you can fine tune each hand landmark and find references online. To use it, uncomment the code and change both functions accordingly.
 - The minimum hand tracking detection confidence (`min_hand_detection_confidence`) and minimum hand presence confidence (`min_hand_presence_confidence`) are important. They range from 0.1 to 1, and increasing towards 1 gives you more accurate tracking at the cost of frames not being read if the task does not see your hands. Decreasing towards 0.1 gives you a smoother tracking at the expense of some accuracy.
-- The default print output prints out all of the landmarks, for each frame. You could edit the output to give you certain landmarks, among other things. To see the names of landmarks, check out the labels [here](https://ai.google.dev/edge/mediapipe/solutions/vision/hand_landmarker/index#:~:text=Learn%20more.-,Model%20name,-Input%20shape). There is also more information on the hand tracking task.
+- The default print output prints out all of the landmarks, for each frame. An example of this is shown in the VSCode terminal in the video. You could edit the output to give you certain landmarks, among other things. To see the names of landmarks, check out the labels [here](https://ai.google.dev/edge/mediapipe/solutions/vision/hand_landmarker/index#:~:text=Learn%20more.-,Model%20name,-Input%20shape). There is also more information on the hand tracking task.
