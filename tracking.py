@@ -98,20 +98,21 @@ HandLandmarkerOptions = mp.tasks.vision.HandLandmarkerOptions
 HandLandmarkerResult = mp.tasks.vision.HandLandmarkerResult
 VisionRunningMode = mp.tasks.vision.RunningMode
 
-# Global variable for result, so that we can access it outside the callback function
+# Global variable for result, so that we can access it outside the callback function. UNSAFE
 RESULT = None
 
 
-# Create a hand landmarker instance with the live stream mode:
+# Result function which is necessary for live-streaming camera frames.
 def print_result(
     result: HandLandmarkerResult, output_image: mp.Image, timestamp_ms: int
 ):
 
     print("hand landmarker result: {}".format(result))
     global RESULT
-    RESULT = result
+    RESULT = result  # UNSAFE
 
 
+# Hand Landmarker Options and Initialization
 options = HandLandmarkerOptions(
     base_options=BaseOptions(model_asset_path="hand_landmarker.task"),
     running_mode=VisionRunningMode.LIVE_STREAM,
@@ -121,6 +122,8 @@ options = HandLandmarkerOptions(
     min_hand_presence_confidence=0.1,
 )
 with HandLandmarker.create_from_options(options) as landmarker:
+
+    # Camera Initialization
     cap = cv.VideoCapture(0)
     if not cap.isOpened():
         print("Cannot open camera")
@@ -139,12 +142,13 @@ with HandLandmarker.create_from_options(options) as landmarker:
         # Display the resulting frame
         frame_timestamp_ms = int(cap.get(cv.CAP_PROP_POS_MSEC))
         mp_image = mp.Image(image_format=mp.ImageFormat.SRGB, data=np.asarray(frame))
+        # Call to detect hand landmarks
         detection_result = landmarker.detect_async(mp_image, frame_timestamp_ms)
         if RESULT is not None:
             annotated_image = draw_landmarks_on_image(mp_image.numpy_view(), RESULT)
             cv.flip(annotated_image, 1, annotated_image)
             cv.imshow("Hand Tracking", annotated_image)
-            RESULT = None  # Reset the RESULT variable
+            RESULT = None  # Reset the RESULT variable (UNSAFE)
             if cv.waitKey(5) == ord("q"):
                 break
     cap.release()
