@@ -3,11 +3,10 @@ import cv2 as cv
 import mediapipe as mp
 from mediapipe import solutions
 from mediapipe.framework.formats import landmark_pb2
-import numpy as np
-import mediapipe as mp
-from mediapipe.tasks import python
-from mediapipe.tasks.python import vision
+from mediapipe.framework.formats import landmark_pb2
+from mediapipe.python.solutions import drawing_utils, drawing_styles, hands
 
+# Hand Label Text Parameters
 MARGIN = 10  # pixels
 FONT_SIZE = 1
 FONT_THICKNESS = 1
@@ -15,6 +14,17 @@ HANDEDNESS_TEXT_COLOR = (88, 205, 54)  # vibrant green
 
 
 def draw_landmarks_on_image(rgb_image, detection_result):
+    """
+    Draws hand landmarks on an RGB image.
+
+    Args:
+        rgb_image (numpy.ndarray): The RGB image on which to draw the landmarks.
+        detection_result (mediapipe.python.solutions.hands.HandLandmarkList): The detection result containing hand landmarks.
+
+    Returns:
+        numpy.ndarray: The annotated image with hand landmarks and handedness information.
+
+    """
     hand_landmarks_list = detection_result.hand_landmarks
     handedness_list = detection_result.handedness
     annotated_image = np.copy(rgb_image)
@@ -34,12 +44,23 @@ def draw_landmarks_on_image(rgb_image, detection_result):
                 for landmark in hand_landmarks
             ]
         )
+
+        # # Custom landmark style
+        # custom_landmark_style = drawing_utils.DrawingSpec(
+        #     color=(0, 255, 0), thickness=2, circle_radius=2  # Green color
+        # )
+
+        # # Custom connection style
+        # custom_connection_style = drawing_utils.DrawingSpec(
+        #     color=(255, 0, 0), thickness=2  # Red color
+        # )
+
         solutions.drawing_utils.draw_landmarks(
             annotated_image,
             hand_landmarks_proto,
             solutions.hands.HAND_CONNECTIONS,
-            solutions.drawing_styles.get_default_hand_landmarks_style(),
-            solutions.drawing_styles.get_default_hand_connections_style(),
+            solutions.drawing_styles.get_default_hand_landmarks_style(),  # Replace these for custom colors
+            solutions.drawing_styles.get_default_hand_connections_style(),  # Replace these for custom colors
         )
 
         # Get the top left corner of the detected hand's bounding box.
@@ -61,18 +82,23 @@ def draw_landmarks_on_image(rgb_image, detection_result):
             FONT_THICKNESS,
             cv.LINE_AA,
         )
-        text_image = cv.flip(text_image, 1)
-        annotated_image = cv.addWeighted(annotated_image, 1.0, text_image, 1.0, 0.0)
 
+        # Flip the text layer for front-facing cameras.
+        text_image = cv.flip(text_image, 1)
+
+        # Annotate frame
+        annotated_image = cv.addWeighted(annotated_image, 1.0, text_image, 1.0, 0.0)
     return annotated_image
 
 
+# MediaPipe Hand Landmark Task Initialization and Parameters
 BaseOptions = mp.tasks.BaseOptions
 HandLandmarker = mp.tasks.vision.HandLandmarker
 HandLandmarkerOptions = mp.tasks.vision.HandLandmarkerOptions
 HandLandmarkerResult = mp.tasks.vision.HandLandmarkerResult
 VisionRunningMode = mp.tasks.vision.RunningMode
 
+# Global variable for result, so that we can access it outside the callback function
 RESULT = None
 
 
