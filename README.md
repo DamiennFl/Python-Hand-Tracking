@@ -1,5 +1,5 @@
 # Hand-Tracking-Volume-Control
-#### Python computer vision hand tracking. Created using a Google mediapipe hand-tracking task which reads frames passed by OpenCV.
+Python computer vision hand tracking. Created using a Google mediapipe hand-tracking task which reads frames passed by OpenCV.
 
 https://github.com/user-attachments/assets/379333dd-400b-4e00-9b64-612f8b347a21
 
