@@ -26,14 +26,17 @@ class HandLandmarkDrawer:
 
         Returns:
             numpy.ndarray: The annotated image with hand landmarks and handedness information.
+
         """
         hand_landmarks_list = detection_result.hand_landmarks
         handedness_list = detection_result.handedness
         annotated_image = np.copy(rgb_image)
+
         # Loop through the detected hands to visualize.
         for idx in range(len(hand_landmarks_list)):
             hand_landmarks = hand_landmarks_list[idx]
             handedness = handedness_list[idx]
+
             # Draw the hand landmarks.
             hand_landmarks_proto = landmark_pb2.NormalizedLandmarkList()
             hand_landmarks_proto.landmark.extend(
@@ -44,19 +47,32 @@ class HandLandmarkDrawer:
                     for landmark in hand_landmarks
                 ]
             )
+
+            # # Custom landmark style
+            # custom_landmark_style = drawing_utils.DrawingSpec(
+            #     color=(0, 255, 0), thickness=2, circle_radius=2  # Green color
+            # )
+
+            # # Custom connection style
+            # custom_connection_style = drawing_utils.DrawingSpec(
+            #     color=(255, 0, 0), thickness=2  # Red color
+            # )
+
             solutions.drawing_utils.draw_landmarks(
                 annotated_image,
                 hand_landmarks_proto,
                 solutions.hands.HAND_CONNECTIONS,
-                solutions.drawing_styles.get_default_hand_landmarks_style(),
-                solutions.drawing_styles.get_default_hand_connections_style(),
+                solutions.drawing_styles.get_default_hand_landmarks_style(),  # Replace these for custom colors
+                solutions.drawing_styles.get_default_hand_connections_style(),  # Replace these for custom colors
             )
+
             # Get the top left corner of the detected hand's bounding box.
             height, width, _ = annotated_image.shape
             x_coordinates = [landmark.x for landmark in hand_landmarks]
             y_coordinates = [landmark.y for landmark in hand_landmarks]
-            text_x = int((min(x_coordinates)) * width)
+            text_x = int((1 - min(x_coordinates)) * width)
             text_y = int(min(y_coordinates) * height) - MARGIN
+
             # Draw handedness (left or right hand) on the image.
             text_image = np.zeros_like(annotated_image)
             cv.putText(
@@ -69,8 +85,10 @@ class HandLandmarkDrawer:
                 FONT_THICKNESS,
                 cv.LINE_AA,
             )
+
             # Flip the text layer for front-facing cameras.
-            # text_image = cv.flip(text_image, 1)
+            text_image = cv.flip(text_image, 1)
+
             # Annotate frame
             annotated_image = cv.addWeighted(annotated_image, 1.0, text_image, 1.0, 0.0)
         return annotated_image
@@ -84,8 +102,8 @@ class HandLandmarkDetector:
             running_mode=mp.tasks.vision.RunningMode.LIVE_STREAM,
             num_hands=2,
             result_callback=self.print_result,
-            min_hand_detection_confidence=0.7,
-            min_hand_presence_confidence=0.7,
+            min_hand_detection_confidence=0.3,
+            min_hand_presence_confidence=0.3,
         )
         self.landmarker = mp.tasks.vision.HandLandmarker.create_from_options(
             self.options
@@ -97,7 +115,6 @@ class HandLandmarkDetector:
         output_image: mp.Image,
         timestamp_ms: int,
     ):
-        print("hand landmarker result: {}".format(result))
         self.RESULT = result
 
     def detect(self, frame, frame_timestamp_ms):
@@ -119,7 +136,6 @@ def main():
     while True:
         # Capture frame-by-frame
         ret, frame = cap.read()
-        frame = cv.flip(frame, 1)
 
         # if frame is read correctly ret is True
         if not ret:
@@ -131,6 +147,7 @@ def main():
         detection_result = detector.detect(frame, frame_timestamp_ms)
         if detection_result is not None:
             annotated_image = drawer.draw_landmarks_on_image(frame, detection_result)
+            cv.flip(annotated_image, 1, annotated_image)
             cv.imshow("Hand Tracking", annotated_image)
             detector.RESULT = None
             if cv.waitKey(1) == ord("q"):
