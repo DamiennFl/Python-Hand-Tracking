@@ -115,6 +115,20 @@ class HandLandmarkDetector:
         output_image: mp.Image,
         timestamp_ms: int,
     ):
+        # Check if there are any hand landmarks detected
+        if result.hand_landmarks:
+            # Access the first hand's landmarks
+            hand_landmarks = result.hand_landmarks[0]
+            # Check if landmark 1 exists
+            if len(hand_landmarks) > 8:
+                landmark1 = hand_landmarks[4]
+                landmark2 = hand_landmarks[8]
+                print(f"Landmark 4: x={landmark1.x}, y={landmark1.y}, z={landmark1.z}")
+                print(f"Landmark 8: x={landmark2.x}, y={landmark2.y}, z={landmark2.z}")
+            else:
+                print("Landmarks not found.")
+        else:
+            print("No hand landmarks detected.")
         self.RESULT = result
 
     def detect(self, frame, frame_timestamp_ms):
