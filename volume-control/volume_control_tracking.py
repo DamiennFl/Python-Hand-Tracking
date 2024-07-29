@@ -115,26 +115,32 @@ class HandLandmarkDetector:
         output_image: mp.Image,
         timestamp_ms: int,
     ):
-        # Check if there are any hand landmarks detected
-        if result.hand_landmarks:
-            # Access the first hand's landmarks
-            hand_landmarks = result.hand_landmarks[0]
-            # Check if landmark 1 exists
-            if len(hand_landmarks) > 8:
-                landmark1 = hand_landmarks[4]
-                landmark2 = hand_landmarks[8]
-                print(f"Landmark 4: x={landmark1.x}, y={landmark1.y}, z={landmark1.z}")
-                print(f"Landmark 8: x={landmark2.x}, y={landmark2.y}, z={landmark2.z}")
-            else:
-                print("Landmarks not found.")
-        else:
-            print("No hand landmarks detected.")
+        # # Check if there are any hand landmarks detected
+        # if result.hand_landmarks:
+        #     # Access the first hand's landmarks
+        #     hand_landmarks = result.hand_landmarks[0]
+        #     # Check if landmark 1 exists
+        #     if len(hand_landmarks) > 8:
+        #         landmark1 = hand_landmarks[4]
+        #         landmark2 = hand_landmarks[8]
+        #         print(f"Landmark 4: x={landmark1.x}, y={landmark1.y}, z={landmark1.z}")
+        #         print(f"Landmark 8: x={landmark2.x}, y={landmark2.y}, z={landmark2.z}")
+        #     else:
+        #         print("Landmarks not found.")
+        # else:
+        #     print("No hand landmarks detected.")
         self.RESULT = result
 
     def detect(self, frame, frame_timestamp_ms):
         mp_image = mp.Image(image_format=mp.ImageFormat.SRGB, data=np.asarray(frame))
         self.landmarker.detect_async(mp_image, frame_timestamp_ms)
         return self.RESULT
+
+
+def set_volume(volume):
+    volume = max(0, min(volume, 100))  # Ensure volume is between 0 and 100
+    volume = int(volume * 65535 / 100)  # Convert volume to range 0 - 65535
+    ctypes.windll.winmm.waveOutSetVolume(0, volume | (volume << 16))
 
 
 def main():
@@ -161,6 +167,25 @@ def main():
         detection_result = detector.detect(frame, frame_timestamp_ms)
         if detection_result is not None:
             annotated_image = drawer.draw_landmarks_on_image(frame, detection_result)
+            if len(detection_result.hand_landmarks) > 0:
+                thumb_tip = detection_result.hand_landmarks[0][4]
+                index_tip = detection_result.hand_landmarks[0][8]
+                # Pythagorean
+                distance = (
+                    (thumb_tip.x - index_tip.x) ** 2 + (thumb_tip.y - index_tip.y) ** 2
+                ) ** 0.5
+                # 2 options: Let user scale as small distance being low volume or high distance being high volume OR,
+                # have user be able to have a pinch motion and then control volume when program is running
+                if distance <= 0.15:
+                    print(set_volume(40))
+                    # Lower volume
+                    print("Close")
+                elif distance <= 0.3:
+                    # Leave volume
+                    print("Medium")
+                else:
+                    # Increase volume
+                    print("Far")
             cv.flip(annotated_image, 1, annotated_image)
             cv.imshow("Hand Tracking", annotated_image)
             detector.RESULT = None
