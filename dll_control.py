@@ -49,67 +49,6 @@ class IAudioEndpointVolume(IUnknown):
             "GetMasterVolumeLevelScalar",
             (["out", "retval"], POINTER(c_float), "pfLevelDB"),
         ),
-        COMMETHOD(
-            [],
-            HRESULT,
-            "SetChannelVolumeLevel",
-            (["in"], DWORD, "nChannel"),
-            (["in"], c_float, "fLevelDB"),
-            (["in"], POINTER(GUID), "pguidEventContext"),
-        ),
-        COMMETHOD(
-            [],
-            HRESULT,
-            "SetChannelVolumeLevelScalar",
-            (["in"], DWORD, "nChannel"),
-            (["in"], c_float, "fLevelDB"),
-            (["in"], POINTER(GUID), "pguidEventContext"),
-        ),
-        COMMETHOD(
-            [],
-            HRESULT,
-            "GetChannelVolumeLevel",
-            (["in"], DWORD, "nChannel"),
-            (["out", "retval"], POINTER(c_float), "pfLevelDB"),
-        ),
-        COMMETHOD(
-            [],
-            HRESULT,
-            "GetChannelVolumeLevelScalar",
-            (["in"], DWORD, "nChannel"),
-            (["out", "retval"], POINTER(c_float), "pfLevelDB"),
-        ),
-        COMMETHOD(
-            [],
-            HRESULT,
-            "SetMute",
-            (["in"], BOOL, "bMute"),
-            (["in"], POINTER(GUID), "pguidEventContext"),
-        ),
-        COMMETHOD([], HRESULT, "GetMute", (["out", "retval"], POINTER(BOOL), "pbMute")),
-        COMMETHOD(
-            [],
-            HRESULT,
-            "GetVolumeStepInfo",
-            (["out", "retval"], POINTER(c_float), "pnStep"),
-            (["out", "retval"], POINTER(c_float), "pnStepCount"),
-        ),
-        COMMETHOD([], HRESULT, "VolumeStepUp", (["in"], POINTER(GUID), "pguidEventContext")),
-        COMMETHOD([], HRESULT, "VolumeStepDown", (["in"], POINTER(GUID), "pguidEventContext")),
-        COMMETHOD(
-            [],
-            HRESULT,
-            "QueryHardwareSupport",
-            (["out", "retval"], POINTER(DWORD), "pdwHardwareSupportMask"),
-        ),
-        COMMETHOD(
-            [],
-            HRESULT,
-            "GetVolumeRange",
-            (["out", "retval"], POINTER(c_float), "pfMin"),
-            (["out", "retval"], POINTER(c_float), "pfMax"),
-            (["out", "retval"], POINTER(c_float), "pfIncr"),
-        ),
     ]
 
 
@@ -165,12 +104,11 @@ class AudioController:
 
     def get_volume(self):
         volume_level = self.volume.GetMasterVolumeLevelScalar()
-        print(f"Current volume: " + str(volume_level))
         return volume_level
 
     def set_volume(self, level):
         new_volume = self.get_volume() + level
         if new_volume < 0 or new_volume > 1:
-            print("Volume out of range.")
+            pass
         else:
             self.volume.SetMasterVolumeLevelScalar(new_volume, None)

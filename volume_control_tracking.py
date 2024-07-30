@@ -141,11 +141,12 @@ def main():
                 # Pythagorean
                 distance = ((thumb_tip.x - index_tip.x) ** 2 + (thumb_tip.y - index_tip.y) ** 2) ** 0.5
                 current_volume = volume.get_volume()
-                multiplier = max(0, min(distance, 1))
-                if distance <= 0.15:
-                    volume.set_volume(-0.01)
-                elif distance >= 0.3:
-                    volume.set_volume(0.01)
+                if distance <= 0.10:
+                    smallMulti = (1 / distance) / 9
+                    volume.set_volume(-0.01 * smallMulti)
+                elif distance >= 0.15:
+                    bigMulti = distance * 6
+                    volume.set_volume(0.01 * bigMulti)
             cv.flip(annotated_image, 1, annotated_image)
             cv.imshow("Hand Tracking", annotated_image)
             detector.RESULT = None
