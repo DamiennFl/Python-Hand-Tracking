@@ -4,6 +4,7 @@ import mediapipe as mp
 from mediapipe import solutions
 from mediapipe.framework.formats import landmark_pb2
 from mediapipe.python.solutions import drawing_utils, drawing_styles, hands
+from dll_control import volume
 
 # Hand Label Text Parameters
 MARGIN = 10  # pixels
@@ -138,9 +139,16 @@ class HandLandmarkDetector:
 
 
 def set_volume(volume):
-    volume = max(0, min(volume, 100))  # Ensure volume is between 0 and 100
-    volume = int(volume * 65535 / 100)  # Convert volume to range 0 - 65535
-    ctypes.windll.winmm.waveOutSetVolume(0, volume | (volume << 16))
+    # Ensure the volume is within the valid range (0 to 1)
+    volume = max(0.0, min(1.0, volume))
+    # Convert the volume to a 16-bit value (0 to 65535)
+    volume_value = int(volume * 0xFFFF)
+    # Combine the left and right channel volumes into a single 32-bit value
+    volume_value = volume_value | (volume_value << 16)
+    # Define the waveOutSetVolume function
+    waveOutSetVolume = ctypes.windll.winmm.waveOutSetVolume
+    # Call the function with the appropriate parameters
+    waveOutSetVolume(0, volume_value)
 
 
 def main():
@@ -174,18 +182,6 @@ def main():
                 distance = (
                     (thumb_tip.x - index_tip.x) ** 2 + (thumb_tip.y - index_tip.y) ** 2
                 ) ** 0.5
-                # 2 options: Let user scale as small distance being low volume or high distance being high volume OR,
-                # have user be able to have a pinch motion and then control volume when program is running
-                if distance <= 0.15:
-                    print(set_volume(40))
-                    # Lower volume
-                    print("Close")
-                elif distance <= 0.3:
-                    # Leave volume
-                    print("Medium")
-                else:
-                    # Increase volume
-                    print("Far")
             cv.flip(annotated_image, 1, annotated_image)
             cv.imshow("Hand Tracking", annotated_image)
             detector.RESULT = None

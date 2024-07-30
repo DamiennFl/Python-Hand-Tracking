@@ -9,6 +9,7 @@ Requirements:
 - `mediapipe` (Download hand-landmarker task here and make it available in your directory: https://ai.google.dev/edge/mediapipe/solutions/vision/hand_landmarker/index#:~:text=Learn%20more.-,Model%20name,-Input%20shape)
 - `numpy`
 - `matplotlib`
+- `comtypes` (Only for volume control)
 
 "tracking.py" is a barebones example of how to process video frames from openCV into a mediapipe hand-tracking task. Some things to note:
 - The current implementation mirrors the frames, since this program was executed using a front-facing camera, which mirrors by default. For rear-facing cameras, `text_x = int((1 - min(x_coordinates)) * width)` can be changed to `text_x = int((min(x_coordinates)) * width)` to write the hand labels starting from the right instead of the left. You will also need to remove `text_image = cv.flip(text_image, 1)`, which flips the hand labels once they are drawn.
