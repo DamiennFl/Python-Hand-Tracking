@@ -94,12 +94,8 @@ class IAudioEndpointVolume(IUnknown):
             (["out", "retval"], POINTER(c_float), "pnStep"),
             (["out", "retval"], POINTER(c_float), "pnStepCount"),
         ),
-        COMMETHOD(
-            [], HRESULT, "VolumeStepUp", (["in"], POINTER(GUID), "pguidEventContext")
-        ),
-        COMMETHOD(
-            [], HRESULT, "VolumeStepDown", (["in"], POINTER(GUID), "pguidEventContext")
-        ),
+        COMMETHOD([], HRESULT, "VolumeStepUp", (["in"], POINTER(GUID), "pguidEventContext")),
+        COMMETHOD([], HRESULT, "VolumeStepDown", (["in"], POINTER(GUID), "pguidEventContext")),
         COMMETHOD(
             [],
             HRESULT,
@@ -159,17 +155,22 @@ class IMMDeviceEnumerator(comtypes.IUnknown):
     ]
 
 
-enumerator = comtypes.CoCreateInstance(
-    CLSID_MMDeviceEnumerator, IMMDeviceEnumerator, comtypes.CLSCTX_INPROC_SERVER
-)
+class AudioController:
+    def __init__(self):
+        self.enumerator = comtypes.CoCreateInstance(
+            CLSID_MMDeviceEnumerator, IMMDeviceEnumerator, CLSCTX_INPROC_SERVER
+        )
+        self.endpoint = self.enumerator.GetDefaultAudioEndpoint(0, 1)
+        self.volume = self.endpoint.Activate(IID_IAudioEndpointVolume, CLSCTX_INPROC_SERVER, None)
 
-print(enumerator)
-endpoint = enumerator.GetDefaultAudioEndpoint(0, 1)
-print(endpoint)
-volume = endpoint.Activate(
-    IID_IAudioEndpointVolume, comtypes.CLSCTX_INPROC_SERVER, None
-)
-print(volume)
-print(volume.GetMasterVolumeLevelScalar())
-print(volume.GetVolumeRange())
-volume.SetMasterVolumeLevelScalar(0.42, None)
+    def get_volume(self):
+        volume_level = self.volume.GetMasterVolumeLevelScalar()
+        print(f"Current volume: " + str(volume_level))
+        return volume_level
+
+    def set_volume(self, level):
+        new_volume = self.get_volume() + level
+        if new_volume < 0 or new_volume > 1:
+            print("Volume out of range.")
+        else:
+            self.volume.SetMasterVolumeLevelScalar(new_volume, None)

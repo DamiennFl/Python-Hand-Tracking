@@ -4,13 +4,14 @@ import mediapipe as mp
 from mediapipe import solutions
 from mediapipe.framework.formats import landmark_pb2
 from mediapipe.python.solutions import drawing_utils, drawing_styles, hands
-from dll_control import volume
+from dll_control import AudioController
 
 # Hand Label Text Parameters
 MARGIN = 10  # pixels
 FONT_SIZE = 1
 FONT_THICKNESS = 1
 HANDEDNESS_TEXT_COLOR = (88, 205, 54)  # vibrant green
+volume = AudioController()
 
 
 class HandLandmarkDrawer:
@@ -42,22 +43,10 @@ class HandLandmarkDrawer:
             hand_landmarks_proto = landmark_pb2.NormalizedLandmarkList()
             hand_landmarks_proto.landmark.extend(
                 [
-                    landmark_pb2.NormalizedLandmark(
-                        x=landmark.x, y=landmark.y, z=landmark.z
-                    )
+                    landmark_pb2.NormalizedLandmark(x=landmark.x, y=landmark.y, z=landmark.z)
                     for landmark in hand_landmarks
                 ]
             )
-
-            # # Custom landmark style
-            # custom_landmark_style = drawing_utils.DrawingSpec(
-            #     color=(0, 255, 0), thickness=2, circle_radius=2  # Green color
-            # )
-
-            # # Custom connection style
-            # custom_connection_style = drawing_utils.DrawingSpec(
-            #     color=(255, 0, 0), thickness=2  # Red color
-            # )
 
             solutions.drawing_utils.draw_landmarks(
                 annotated_image,
@@ -106,9 +95,7 @@ class HandLandmarkDetector:
             min_hand_detection_confidence=0.3,
             min_hand_presence_confidence=0.3,
         )
-        self.landmarker = mp.tasks.vision.HandLandmarker.create_from_options(
-            self.options
-        )
+        self.landmarker = mp.tasks.vision.HandLandmarker.create_from_options(self.options)
 
     def print_result(
         self,
@@ -116,39 +103,12 @@ class HandLandmarkDetector:
         output_image: mp.Image,
         timestamp_ms: int,
     ):
-        # # Check if there are any hand landmarks detected
-        # if result.hand_landmarks:
-        #     # Access the first hand's landmarks
-        #     hand_landmarks = result.hand_landmarks[0]
-        #     # Check if landmark 1 exists
-        #     if len(hand_landmarks) > 8:
-        #         landmark1 = hand_landmarks[4]
-        #         landmark2 = hand_landmarks[8]
-        #         print(f"Landmark 4: x={landmark1.x}, y={landmark1.y}, z={landmark1.z}")
-        #         print(f"Landmark 8: x={landmark2.x}, y={landmark2.y}, z={landmark2.z}")
-        #     else:
-        #         print("Landmarks not found.")
-        # else:
-        #     print("No hand landmarks detected.")
         self.RESULT = result
 
     def detect(self, frame, frame_timestamp_ms):
         mp_image = mp.Image(image_format=mp.ImageFormat.SRGB, data=np.asarray(frame))
         self.landmarker.detect_async(mp_image, frame_timestamp_ms)
         return self.RESULT
-
-
-def set_volume(volume):
-    # Ensure the volume is within the valid range (0 to 1)
-    volume = max(0.0, min(1.0, volume))
-    # Convert the volume to a 16-bit value (0 to 65535)
-    volume_value = int(volume * 0xFFFF)
-    # Combine the left and right channel volumes into a single 32-bit value
-    volume_value = volume_value | (volume_value << 16)
-    # Define the waveOutSetVolume function
-    waveOutSetVolume = ctypes.windll.winmm.waveOutSetVolume
-    # Call the function with the appropriate parameters
-    waveOutSetVolume(0, volume_value)
 
 
 def main():
@@ -179,9 +139,13 @@ def main():
                 thumb_tip = detection_result.hand_landmarks[0][4]
                 index_tip = detection_result.hand_landmarks[0][8]
                 # Pythagorean
-                distance = (
-                    (thumb_tip.x - index_tip.x) ** 2 + (thumb_tip.y - index_tip.y) ** 2
-                ) ** 0.5
+                distance = ((thumb_tip.x - index_tip.x) ** 2 + (thumb_tip.y - index_tip.y) ** 2) ** 0.5
+                current_volume = volume.get_volume()
+                multiplier = max(0, min(distance, 1))
+                if distance <= 0.15:
+                    volume.set_volume(-0.01)
+                elif distance >= 0.3:
+                    volume.set_volume(0.01)
             cv.flip(annotated_image, 1, annotated_image)
             cv.imshow("Hand Tracking", annotated_image)
             detector.RESULT = None
