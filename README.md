@@ -15,7 +15,7 @@ Requirements:
 - The current implementation mirrors the frames, since this program was executed using a front-facing camera, which mirrors by default. For rear-facing cameras, `text_x = int((1 - min(x_coordinates)) * width)` can be changed to `text_x = int((min(x_coordinates)) * width)` to write the hand labels starting from the right instead of the left. You will also need to remove `text_image = cv.flip(text_image, 1)`, which flips the hand labels once they are drawn.
 - This implementation does not retrieve the actual timestamp of the edited frame, but instead layers the openCV frame with the drawn hand landmarks. The program expects that your computer is powerful enough. If it is not, there will be some noticeable delay with the landmarks compared to the displayed frame.
     - A good place to start to change this would be reading the landmark timestamp from the result output for the tracking instead of manually getting the current frame from openCV.
-- The implementation uses a global `RESULT` variable to access the result outside of the callback function. This is unsafe (but I didn't want to spend time restructuring).
+- The implementation uses a global `RESULT` variable to access the result outside of the callback function. This is not a great implementation. `volume_control_tracking` has a much more structured implementation.
 
 Some things are customizable. In the code, you can change:
 - The colors of the tracking. In `draw_landmarks_on_image`, there is commented code which allows you to set custom colors. It is just an example; you can fine tune each hand landmark and find references online. To use it, uncomment the code and change both functions accordingly.
