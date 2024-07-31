@@ -24,6 +24,7 @@ Some things are customizable. In the code, you can change:
 
 ### Volume Control
 This program (`volume_control_tracking.py`) is an example of how to control volume with fingers. By retrieving and then calculating the distance between the index and thumb, we can use this distance to increase or decrease the volume given how far apart the fingers are. Some things to note:
+- `dll_control.py` uses comptypes and ctypes to execute C/C++ functions to access the windows master audio. The script comes from [here](https://mail.python.org/pipermail/python-win32/2014-March/013080.html), which I then modified. (Shoutout to Tim for making my life easier).
 - The currently read fingers are read within the main function (`thumb_tip` and `index_tip`). You can easily change which hand landmarks you would like to read by changing which landmark values are accessed. Currently, 4 and 8 are accessed, which map to the thumb and index tip, respectively. The image below shows the landmark mappings.
 - The implementation works by incrementally increasing the volume when the fingers are far apart, not changing it when the fingers are a medium/resting distance apart, and decreasing when the fingers are close together.
 - ![image](https://github.com/user-attachments/assets/9ccc9f1c-707b-41a0-93b6-c6a0b19ecda0)
