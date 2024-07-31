@@ -11,6 +11,7 @@ MARGIN = 10  # pixels
 FONT_SIZE = 1
 FONT_THICKNESS = 1
 HANDEDNESS_TEXT_COLOR = (88, 205, 54)  # vibrant green
+# Volume object from dll_control.py
 volume = AudioController()
 
 
@@ -86,6 +87,12 @@ class HandLandmarkDrawer:
 
 class HandLandmarkDetector:
     def __init__(self, model_path="hand_landmarker.task"):
+        """
+        Initializes the VolumeControlTracking object.
+
+        Args:
+            model_path (str, optional): The path to the hand landmarker model asset. Defaults to "hand_landmarker.task".
+        """
         self.RESULT = None
         self.options = mp.tasks.vision.HandLandmarkerOptions(
             base_options=mp.tasks.BaseOptions(model_asset_path=model_path),
@@ -103,9 +110,30 @@ class HandLandmarkDetector:
         output_image: mp.Image,
         timestamp_ms: int,
     ):
+        """
+        Prints the result of hand landmark detection.
+
+        Args:
+            result (mp.tasks.vision.HandLandmarkerResult): The result of hand landmark detection.
+            output_image (mp.Image): The output image with hand landmarks drawn.
+            timestamp_ms (int): The timestamp in milliseconds.
+
+        Returns:
+            None
+        """
         self.RESULT = result
 
     def detect(self, frame, frame_timestamp_ms):
+        """
+        Detects hand landmarks in the given frame.
+
+        Args:
+            frame: The input frame to detect hand landmarks in.
+            frame_timestamp_ms: The timestamp of the frame in milliseconds.
+
+        Returns:
+            The result of the detection process.
+        """
         mp_image = mp.Image(image_format=mp.ImageFormat.SRGB, data=np.asarray(frame))
         self.landmarker.detect_async(mp_image, frame_timestamp_ms)
         return self.RESULT
@@ -142,9 +170,11 @@ def main():
                 distance = ((thumb_tip.x - index_tip.x) ** 2 + (thumb_tip.y - index_tip.y) ** 2) ** 0.5
                 current_volume = volume.get_volume()
                 if distance <= 0.10:
+                    # Multiplier for scaling dynamic volume change
                     smallMulti = (1 / distance) / 9
                     volume.set_volume(-0.01 * smallMulti)
                 elif distance >= 0.15:
+                    # Multiplier for scaling dynamic volume change
                     bigMulti = distance * 6
                     volume.set_volume(0.01 * bigMulti)
             cv.flip(annotated_image, 1, annotated_image)
