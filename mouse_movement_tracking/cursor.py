@@ -4,10 +4,15 @@ Move cursor to specified coordinates.
 """
 
 import ctypes
+import random
+import time
 
 
 class _point_t(ctypes.Structure):
     """Cursor point coordinate relative to screen resolution."""
+
+    MOUSEEVENTF_LEFTDOWN = 0x0002
+    MOUSEEVENTF_LEFTUP = 0x0004
 
     _fields_ = [
         ("x", ctypes.c_long),
@@ -41,15 +46,9 @@ def set_cursor_position(x, y):
         return False
 
 
-# Example usage
 if __name__ == "__main__":
-    # Get current cursor position
-    current_position = get_cursor_position()
-    print(f"Current position: {current_position}")
-
-    # Move cursor to (100, 100)
-    set_cursor_position(100, 100)
-
-    # Verify new cursor position
-    new_position = get_cursor_position()
-    print(f"New position: {new_position}")
+    while True:
+        current_position = get_cursor_position()
+        if current_position is not None:
+            set_cursor_position(current_position[0], current_position[1])
+        time.sleep(0.05)

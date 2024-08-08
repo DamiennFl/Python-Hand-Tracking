@@ -3,6 +3,8 @@ import cv2 as cv
 import mediapipe as mp
 from mediapipe import solutions
 from mediapipe.framework.formats import landmark_pb2
+from cursor import get_cursor_position, set_cursor_position
+import ctypes
 
 # Hand Label Text Parameters
 MARGIN = 10  # pixels
@@ -102,7 +104,7 @@ class HandLandmarkDetector:
 
     def print_result(
         self,
-        result: mp.tasks.vision.HandLandmarkerResult,
+        result: mp.tasks.vision.HandLandmarkerResult,  # type: ignore
         output_image: mp.Image,
         timestamp_ms: int,
     ):
@@ -157,11 +159,20 @@ def main():
         # Our operations on the frame come here
         frame_timestamp_ms = int(cap.get(cv.CAP_PROP_POS_MSEC))
         detection_result = detector.detect(frame, frame_timestamp_ms)
+        current_cursor_position = get_cursor_position()
+
         if detection_result is not None:
             annotated_image = drawer.draw_landmarks_on_image(frame, detection_result)
-            if len(detection_result.hand_landmarks) > 8:
+            if len(detection_result.hand_landmarks) > 0:
                 index_tip = detection_result.hand_landmarks[0][8]
                 print(f"Index Tip: {index_tip.x}, {index_tip.y}, {index_tip.z}")
+
+                screen_width = ctypes.windll.user32.GetSystemMetrics(0)
+                screen_height = ctypes.windll.user32.GetSystemMetrics(1)
+                cursor_x = screen_width - int(index_tip.x * screen_width)
+                cursor_y = int(index_tip.y * screen_height)
+
+                set_cursor_position(cursor_x, cursor_y)
             cv.flip(annotated_image, 1, annotated_image)
             cv.imshow("Hand Tracking", annotated_image)
             detector.RESULT = None

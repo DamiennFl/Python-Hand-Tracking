@@ -106,7 +106,7 @@ class HandLandmarkDetector:
 
     def print_result(
         self,
-        result: mp.tasks.vision.HandLandmarkerResult,
+        result: mp.tasks.vision.HandLandmarkerResult,  # type: ignore
         output_image: mp.Image,
         timestamp_ms: int,
     ):
