@@ -1,9 +1,10 @@
+import collections
 import numpy as np
 import cv2 as cv
 import mediapipe as mp
 from mediapipe import solutions
 from mediapipe.framework.formats import landmark_pb2
-from cursor import get_cursor_position, set_cursor_position
+from cursor import *
 import ctypes
 
 # Hand Label Text Parameters
@@ -147,6 +148,9 @@ def main():
         print("Cannot open camera")
         exit()
 
+    z_positions = collections.deque(maxlen=5)
+    z_threshold = 0.1
+
     while True:
         # Capture frame-by-frame
         ret, frame = cap.read()
@@ -165,7 +169,7 @@ def main():
             annotated_image = drawer.draw_landmarks_on_image(frame, detection_result)
             if len(detection_result.hand_landmarks) > 0:
                 index_tip = detection_result.hand_landmarks[0][8]
-                print(f"Index Tip z: {index_tip.z}")
+                # print(f"Index Tip z: {index_tip.z}")
 
                 screen_width = ctypes.windll.user32.GetSystemMetrics(0)
                 screen_height = ctypes.windll.user32.GetSystemMetrics(1)
@@ -179,6 +183,16 @@ def main():
                 cursor_x = screen_width - int(centered_x * screen_width)
                 cursor_y = int(centered_y * screen_height)
                 set_cursor_position(cursor_x, cursor_y)
+
+                z_positions.append(index_tip.z)
+
+                if len(z_positions) == z_positions.maxlen:
+                    # Calculate the average z-position change
+                    z_change = z_positions[-1] - z_positions[0]
+                    if z_change > z_threshold:
+                        click()
+                        z_positions.clear()
+
             cv.flip(annotated_image, 1, annotated_image)
             cv.imshow("Hand Tracking", annotated_image)
             detector.RESULT = None

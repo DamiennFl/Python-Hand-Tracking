@@ -35,7 +35,7 @@ def get_cursor_position():
     x = int(point.x)
     y = int(point.y)
     if result:
-        print(x, y)
+        # print(x, y)
         return (x, y)
     else:
         return None
@@ -44,7 +44,7 @@ def get_cursor_position():
 def set_cursor_position(x, y):
     result = ctypes.windll.user32.SetCursorPos(x, y)
     if result:
-        print(f"Cursor moved to ({x}, {y})")
+        # print(f"Cursor moved to ({x}, {y})")
         return True
     else:
         print("Failed to move cursor")
