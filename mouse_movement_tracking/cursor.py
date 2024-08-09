@@ -20,6 +20,11 @@ class _point_t(ctypes.Structure):
     ]
 
 
+def click():
+    ctypes.windll.user32.mouse_event(_point_t.MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0)
+    ctypes.windll.user32.mouse_event(_point_t.MOUSEEVENTF_LEFTUP, 0, 0, 0, 0)
+
+
 def get_cursor_position():
     point = _point_t()
 
@@ -51,4 +56,4 @@ if __name__ == "__main__":
         current_position = get_cursor_position()
         if current_position is not None:
             set_cursor_position(current_position[0], current_position[1])
-        time.sleep(0.05)
+        time.sleep(0.1)

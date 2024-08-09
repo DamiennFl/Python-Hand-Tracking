@@ -165,13 +165,19 @@ def main():
             annotated_image = drawer.draw_landmarks_on_image(frame, detection_result)
             if len(detection_result.hand_landmarks) > 0:
                 index_tip = detection_result.hand_landmarks[0][8]
-                print(f"Index Tip: {index_tip.x}, {index_tip.y}, {index_tip.z}")
+                print(f"Index Tip z: {index_tip.z}")
 
                 screen_width = ctypes.windll.user32.GetSystemMetrics(0)
                 screen_height = ctypes.windll.user32.GetSystemMetrics(1)
-                cursor_x = screen_width - int(index_tip.x * screen_width)
-                cursor_y = int(index_tip.y * screen_height)
-
+                # Scale coords
+                scaling_factor = 1.5
+                centered_x = (index_tip.x - 0.5) * scaling_factor + 0.5
+                centered_y = (index_tip.y - 0.5) * scaling_factor + 0.5
+                centered_x = min(max(centered_x, 0), 1)
+                centered_y = min(max(centered_y, 0), 1)
+                # Mirror x and set coords
+                cursor_x = screen_width - int(centered_x * screen_width)
+                cursor_y = int(centered_y * screen_height)
                 set_cursor_position(cursor_x, cursor_y)
             cv.flip(annotated_image, 1, annotated_image)
             cv.imshow("Hand Tracking", annotated_image)
